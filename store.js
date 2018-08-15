@@ -75,8 +75,7 @@ assign(Store.prototype, {
 			}
 
 			if (dirty) {
-				dependent.component._set(componentState, options);
-				return true;
+				return dependent.component._set(componentState, options);
 			}
 		});
 
