@@ -196,19 +196,35 @@ function set(newState) {
 	this.root._lock = false;
 }
 
-function _set(newState) {
+function _set(newState, options) {
 	var oldState = this._state,
-		changed = {},
+		changed = this._changed || {},
 		dirty = false;
 
 	for (var key in newState) {
 		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
-	if (!dirty) return;
+	if (!dirty) return false;
 
 	this._state = assign(assign({}, oldState), newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
+
+	if (!this._changed) {
+		this._changed = changed;
+		this._oldState = oldState;
+	}
+
+	if (!options || !options.skipUpdate) this._updateFragment();
+
+	return true;
+}
+
+function _updateFragment() {
+	if (!this._changed) return;
+	var changed = this._changed,
+		oldState = this._oldState;
+	this._changed = this._oldState = null;
 
 	if (this._fragment) {
 		this.fire("state", { changed: changed, current: this._state, previous: oldState });
@@ -233,6 +249,7 @@ var proto = {
 	set,
 	_recompute: noop,
 	_set,
+	_updateFragment,
 	_mount,
 	_differs
 };

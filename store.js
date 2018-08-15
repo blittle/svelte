@@ -61,8 +61,8 @@ assign(Store.prototype, {
 		});
 
 		const dependents = this._dependents.slice(); // guard against mutations
-		for (let i = 0; i < dependents.length; i += 1) {
-			const dependent = dependents[i];
+		const options = { skipUpdate: true };
+		const dirtyDependents = dependents.filter(dependent => {
 			const componentState = {};
 			let dirty = false;
 
@@ -74,8 +74,13 @@ assign(Store.prototype, {
 				}
 			}
 
-			if (dirty) dependent.component.set(componentState);
-		}
+			if (dirty) {
+				dependent.component._set(componentState, options);
+				return true;
+			}
+		});
+
+		dirtyDependents.forEach(dependent => dependent.component._updateFragment());
 
 		this.fire('update', {
 			changed,
